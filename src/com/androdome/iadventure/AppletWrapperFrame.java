@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JWindow;
 
 import com.androdome.iadventure.appletutils.AppletManager;
@@ -18,7 +16,7 @@ import com.androdome.iadventure.appletutils.ExtendedAppletContext;
 import java.applet.Applet;
 import java.awt.BorderLayout;
 
-public class AppletWrapperFrame extends JFrame {
+public class AppletWrapperFrame extends JDialog {
 	/**
 	 * 
 	 */
@@ -42,6 +40,7 @@ public class AppletWrapperFrame extends JFrame {
 	public static final int HIDE = 6;
 
 	public AppletWrapperFrame(String[] args) {
+		this.setUndecorated(true);
 		this.setBounds(50, 50, 500, 500);
 		getContentPane().setLayout(new BorderLayout(0, 0));
 		for (int i = 0; i < args.length; i++)
@@ -99,12 +98,10 @@ public class AppletWrapperFrame extends JFrame {
 								frame.setLocation(frame.getLocation().x, in.readInt());
 								break;
 							case SHOW:
-								if(!frame.hasFocus())
-									frame.setVisible(true);
+								frame.setAlwaysOnTop(true);
 								break;
 							case HIDE:
-								if(!frame.hasFocus())
-									frame.setVisible(false);
+								frame.setAlwaysOnTop(false);
 								break;
 							default:
 								break;
