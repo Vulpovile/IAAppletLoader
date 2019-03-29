@@ -8,14 +8,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JWindow;
 
 import com.androdome.iadventure.appletutils.AppletManager;
 import com.androdome.iadventure.appletutils.ExtendedAppletContext;
 
+import java.applet.Applet;
 import java.awt.BorderLayout;
 
-public class AppletWrapperFrame extends JWindow {
+public class AppletWrapperFrame extends JFrame {
 	/**
 	 * 
 	 */
@@ -28,6 +31,7 @@ public class AppletWrapperFrame extends JWindow {
 	String name = "";
 	String codebase = "";
 	boolean isJar = false;
+	private Applet applet;
 	
 	public static final int RESX = 0;
 	public static final int RESY = 1;
@@ -59,6 +63,14 @@ public class AppletWrapperFrame extends JWindow {
 				codebase = args[i].replaceFirst("codebase:", "");
 			else if (args[i].startsWith("isjar:"))
 				isJar = Boolean.parseBoolean(args[i].replaceFirst("codebase:", ""));
+			else if (args[i].startsWith("width:"))
+				setSize(Integer.parseInt(args[i].replaceFirst("width:", "")), this.getSize().height);
+			else if (args[i].startsWith("height:"))
+				setSize(this.getSize().width, Integer.parseInt(args[i].replaceFirst("height:", "")));
+			else if (args[i].startsWith("x:"))
+				setLocation(Integer.parseInt(args[i].replaceFirst("x:", "")), this.getLocation().y);
+			else if (args[i].startsWith("y:"))
+				setLocation(this.getLocation().x, Integer.parseInt(args[i].replaceFirst("y:", "")));
 
 		}
 		Thread stdinReader = new Thread() {
@@ -87,10 +99,12 @@ public class AppletWrapperFrame extends JWindow {
 								frame.setLocation(frame.getLocation().x, in.readInt());
 								break;
 							case SHOW:
-								frame.setVisible(true);
+								if(!frame.hasFocus())
+									frame.setVisible(true);
 								break;
 							case HIDE:
-								frame.setVisible(false);
+								if(!frame.hasFocus())
+									frame.setVisible(false);
 								break;
 							default:
 								break;
@@ -101,8 +115,10 @@ public class AppletWrapperFrame extends JWindow {
 				}
 				catch (IOException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					frame.applet.stop();
+					frame.applet.destroy();
+					frame.dispose();
+					System.exit(0);
 				}
 			}
 
@@ -132,7 +148,8 @@ public class AppletWrapperFrame extends JWindow {
 			System.out.println(archives.get(i));
 			arArr[i] = new URL(archives.get(i));
 		}
-		getContentPane().add(AppletManager.getApplet(name, arArr, className, props, codebase, context, isJar));
+		applet = AppletManager.getApplet(name, arArr, className, props, codebase, context, isJar);
+		getContentPane().add(applet);
 		validate();
 
 	}
