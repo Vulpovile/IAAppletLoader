@@ -8,13 +8,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JDialog;
-import javax.swing.JWindow;
+import javax.swing.JPanel;
 
 import com.androdome.iadventure.appletutils.AppletManager;
 import com.androdome.iadventure.appletutils.ExtendedAppletContext;
 
 import java.applet.Applet;
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 
 public class AppletWrapperFrame extends JDialog {
 	/**
@@ -38,11 +39,16 @@ public class AppletWrapperFrame extends JDialog {
 	public static final int SD = 4;
 	public static final int SHOW = 5;
 	public static final int HIDE = 6;
-
+	public static final int VPRECT = 7;
+	public static final int FULLRECT = 8;
+	JPanel appletContainer = new JPanel();
+	Dimension origSize;
 	public AppletWrapperFrame(String[] args) {
 		this.setUndecorated(true);
 		this.setBounds(50, 50, 500, 500);
-		getContentPane().setLayout(new BorderLayout(0, 0));
+		getContentPane().setLayout(null);
+		appletContainer.setLayout(new BorderLayout());
+		add(appletContainer);
 		for (int i = 0; i < args.length; i++)
 		{
 			if (args[i].startsWith("param:"))
@@ -72,6 +78,9 @@ public class AppletWrapperFrame extends JDialog {
 				setLocation(this.getLocation().x, Integer.parseInt(args[i].replaceFirst("y:", "")));
 
 		}
+		appletContainer.setSize(this.getSize());
+		origSize = appletContainer.getSize();
+
 		Thread stdinReader = new Thread() {
 
 			@Override
@@ -86,10 +95,10 @@ public class AppletWrapperFrame extends JDialog {
 						switch(operation)
 						{
 							case RESX:
-								frame.setSize(in.readInt(), frame.getSize().height);
+								appletContainer.setSize(in.readInt(), frame.getSize().height);
 								break;
 							case RESY:
-								frame.setSize(frame.getSize().width, in.readInt());
+								appletContainer.setSize(frame.getSize().width, in.readInt());
 								break;
 							case POSX:
 								frame.setLocation(in.readInt(), frame.getLocation().y);
@@ -98,10 +107,40 @@ public class AppletWrapperFrame extends JDialog {
 								frame.setLocation(frame.getLocation().x, in.readInt());
 								break;
 							case SHOW:
+								toFront();
 								frame.setAlwaysOnTop(true);
+								repaint();
 								break;
 							case HIDE:
 								frame.setAlwaysOnTop(false);
+								break;
+							case SD:
+								frame.applet.stop();
+								frame.applet.destroy();
+								frame.dispose();
+								System.exit(0);
+								break;
+							case VPRECT:
+							{
+								int px = in.readInt();
+								int py = in.readInt();
+								int sx = in.readInt();
+								int sy = in.readInt();
+								calculateSize(px,py,sx,sy);
+							}
+								break;
+							case FULLRECT:
+							{
+								int posx = in.readInt();
+								int posy = in.readInt();
+								int width = in.readInt();
+								int height = in.readInt();
+								int px = in.readInt();
+								int py = in.readInt();
+								int sx = in.readInt();
+								int sy = in.readInt();
+								calculateSize(px,py,sx,sy);
+							}
 								break;
 							default:
 								break;
@@ -122,6 +161,23 @@ public class AppletWrapperFrame extends JDialog {
 		};
 		stdinReader.start();
 
+	}
+	
+	private void calculateSize(int px, int py, int sx, int sy) {
+		setSize(origSize);
+		appletContainer.setSize(origSize);
+		appletContainer.setLocation(0,0);
+		int xstart = Math.max(px,getLocationOnScreen().x);
+		int ystart = Math.max(py,getLocationOnScreen().y);
+		int xend = Math.min(sx,getLocationOnScreen().x+getWidth());
+		int yend = Math.min(sy,getLocationOnScreen().y+getHeight());
+		appletContainer.setLocation(getLocationOnScreen().x-xstart,getLocationOnScreen().y-ystart);
+		setLocation(xstart,ystart);
+		setSize(xend-xstart, yend-ystart);
+		repaint();
+		validate();
+		appletContainer.repaint();
+		appletContainer.revalidate();
 	}
 
 	public static void main(String args[]) {
@@ -146,7 +202,7 @@ public class AppletWrapperFrame extends JDialog {
 			arArr[i] = new URL(archives.get(i));
 		}
 		applet = AppletManager.getApplet(name, arArr, className, props, codebase, context, isJar);
-		getContentPane().add(applet);
+		appletContainer.add(applet);
 		validate();
 
 	}
